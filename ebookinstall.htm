@@ -1,0 +1,272 @@
+﻿<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8">
+<style>
+*{font-family:verdana,arial;font-size:10pt}
+body{border-width:0;margin:0;cursor:pointer}
+th{text-align:left;background-color:#696969;color:white;font-size:12pt}
+th b{width:16px;height:16px}
+.asc b{background-image:url(images/u.gif)}
+.dsc b{background-image:url(images/d.gif)}
+#L{width:100%}
+#L td{color:#696969;border-bottom:1px solid #696969;line-height:1.5em}
+#L td b{color:black;display:block}
+i,u{font-style:normal;font-weight:normal;text-decoration:none;color:#696969}
+button{width:62px;color:blue;cursor:pointer}
+.u{font-family:Courier New;color:black}
+.n i{display:none}
+.h{background-color:#add8e6}
+.h i{display:block}
+</style>
+<script language=javascript>
+var Mirrors=["http://www.helpmesh.com/files/","http://www.heronote.com/files/"];
+var MirrorsStr="http://www.helpmesh.com/files/	http://www.heronote.com/files/";
+var sInstall='Install';
+var sUpdate='Update';
+var sx,sy,mx,my;
+var isStart=false;
+function SortByTd(td){
+	if(td.tagName.toLowerCase()=='b'){
+		td=td.parentElement;
+	}
+	var idx=td.cellIndex;
+	var asc=(td.className==undefined)||(td.className=='dsc');
+	var list=new Array();
+	for(var i=1; i<L.rows.length; i++){
+		list.push(L.rows[i]);
+	}
+	list.sort(function(a,b){
+		if(idx==2){
+			var ba=a.cells[idx].children[0];
+			var bb=b.cells[idx].children[0];
+			if(ba.disabled && bb.disabled){
+				return 0;
+			}
+			else if(ba.disabled){
+				return asc?-1:1;
+			}
+			else if(bb.disabled){
+				return asc?1:-1;
+			}
+			else{
+				var sa=ba.innerText;
+				var sb=bb.innerText;
+				return asc?sa.localeCompare(sb):sb.localeCompare(sa);
+			}
+		}
+		else{
+			var sa=idx==1?a.cells[2].children[0].u:a.cells[idx].children[0].innerText;
+			var sb=idx==1?b.cells[2].children[0].u:b.cells[idx].children[0].innerText;
+			return asc?sa.localeCompare(sb):sb.localeCompare(sa);
+		}
+	});
+	for(var i=0; i<list.length; i++){
+		L.moveRow(list[i].rowIndex,i+1);
+	};
+	var list=L.rows[0];
+	for(var i=0; i<list.cells.length; i++){
+		var x=list.cells[i];
+		x.className=x.cellIndex==idx?(asc?'asc':'dsc'):'';
+	}
+}
+function Sort(){
+	SortByTd(event.srcElement);
+}
+function GetParentByTag(e,t){
+	t=t.toLowerCase();
+	while((e!=null)&&(e.tagName.toLowerCase()!=t)){
+		e=e.parentElement;
+	}
+	return e;
+}
+function _Install(e){
+	var tr=GetParentByTag(e,'tr');
+	var s=e.id+'\n'+e.u+'\n'+MirrorsStr+'\n'+tr.cells[0].children[0].firstChild.nodeValue;
+	if(external.App.RunObject(2,s)==true){
+		e.innerText='Update';
+		e.disabled=true;
+	}
+}
+function Install(){
+	var e=event.srcElement;
+	_Install(e);
+	event.cancelBubble=true;
+}
+function Events(g,settings){
+	var list=document.all.tags(g);
+	for(var i=0; i<list.length; i++){
+		for(var j=0; j<settings.length; j++){
+			var x=settings[j];
+			list[i].attachEvent(x.a,x.f);
+		}
+	}
+}
+function Status(){
+	var Books=null;
+	if(external!=null){
+		try{
+			Books=external.App.GetObjects(2);
+		}
+		catch(e){
+		}	
+	}
+	var list=document.all.tags('button');
+	for(var i=0; i<list.length; i++){
+		var b=list[i];
+		if(Books!=null){
+			try{
+				var idx=Books.IndexOf('Name',b.id);
+				if(idx>-1){
+					b.innerText=sUpdate;
+					var local=Books[idx];
+					b.disabled=parseInt(b.u)<=parseInt(local.updated);
+					continue;
+				}
+			}
+			catch(e){
+			}
+		}
+		b.innerText=sInstall;
+	}
+	if((Books!=null)&&(Books.Length>0)){
+		SortByTd(L.rows[0].cells[2]);
+	}
+}
+function Select(index){
+	var rows=L.rows;
+	for(var i=1; i<rows.length; i++){
+		var tr=rows[i];
+		tr.className='n';
+	}
+	rows[index].className='h';
+}
+function TdClick(){
+	var e=GetParentByTag(event.srcElement,'tr');
+	Select(e.rowIndex);
+}
+function TdDblClick(){
+	var e=GetParentByTag(event.srcElement,'tr');
+	var list=e.all.tags('button');
+	if(list.length>0){
+		_Install(list[0]);
+	}	
+}
+function Init(){
+	Events('button',[{a:'onclick',f:Install}]);
+	Events('th',[{a:'onclick',f:Sort}]);
+	Events('td',[{a:'onclick',f:TdClick},{a:'ondblclick',f:TdDblClick}]);
+	Status();	
+	Select(1);
+}
+</script>    
+</head>
+<body onload="Init()" oncontextmenu="return false" onselectstart="return false">
+<table id=L border=0 cellspacing=0 cellpadding=5>
+<tr><th class=asc>Name<b></b></th><th style="width:139px">Updated<b></b></th><th style="width:82px">Action<b></b></th></tr>
+<tr><td><b>Apache FTP Server<u> - Apache FtpServer Documentation</u></b><i>The Apache FtpServer is a 100% pure Java FTP server.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=ftpd u=20110901></button></td></tr>
+<tr><td><b>Apache HTTP Server<u> - Apache HTTP Server (httpd)</u></b><i>The Apache HTTP Server Project is an effort to develop and maintain an open-source HTTP server for modern operating systems including UNIX and Windows NT.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=httpd u=20110901></button></td></tr>
+<tr><td><b>APR<u> - Apache Portable Runtime (APR)</u></b><i>The Apache Portable Runtime (APR) is a supporting library for the Apache web server.</i></td><td class=u><nobr>September 17,2011</nobr></td><td><button id=APR u=20110917></button></td></tr>
+<tr><td><b>ARP<u> - Address Resolution Protocol (ARP)</u></b><i>The Address Resolution Protocol (ARP) is a computer networking protocol for determining a network host's Link Layer or hardware address when only its Internet Layer (IP) or Network Layer address is known. </i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=ARP u=20110901></button></td></tr>
+<tr><td><b>Atom<u> - The Atom Syndication Format</u></b><i>Atom is an XML-based document format that describes lists of related information known as "feeds".</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Atom u=20110901></button></td></tr>
+<tr><td><b>C<u> - Programming Language - C</u></b><i>This International Standard speciﬁes the form and establishes the interpretation of programs written in the C programming language.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=C u=20110901></button></td></tr>
+<tr><td><b>C++<u> - Programming Languages - C++</u></b><i>C++ is a statically typed, free-form, multi-paradigm, compiled, general-purpose programming language.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=CPP u=20110901></button></td></tr>
+<tr><td><b>CalendarAPI<u> - HTML5 Calendar API</u></b><i>The Calendar API defines a high-level interface to access Calendar information such as events, reminders, alarms and other calendar information.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=CalendarAPI u=20110901></button></td></tr>
+<tr><td><b>CamlLight<u> - Caml Light System</u></b><i>Caml Light is a lightweight, portable implementation of the Caml language.</i></td><td class=u><nobr>September 08,2011</nobr></td><td><button id=CamlLight u=20110908></button></td></tr>
+<tr><td><b>Canvas2DContext<u> - HTML Canvas 2D Context</u></b><i>This specification defines the 2D Context for the HTML canvas element.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Canvas2DContext u=20110901></button></td></tr>
+<tr><td><b>CoffeeScript<u> - CoffeeScript Documentation</u></b><i>CoffeeScript is a little language that compiles into JavaScript. </i></td><td class=u><nobr>September 09,2011</nobr></td><td><button id=CoffeeScript u=20110909></button></td></tr>
+<tr><td><b>Common Lisp<u> - Common Lisp Programming Language</u></b><i>Common Lisp, commonly abbreviated CL, is a dialect of the Lisp programming language, published in ANSI standard document ANSI INCITS 226-1994 (R2004), (formerly X3.226-1994 (R1999)).</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=CommonLisp u=20110901></button></td></tr>
+<tr><td><b>CSS2<u> - CSS 2.1 Specification</u></b><i>This specification defines Cascading Style Sheets, level 2 revision 1 (CSS 2.1). </i></td><td class=u><nobr>September 16,2011</nobr></td><td><button id=CSS2 u=20110916></button></td></tr>
+<tr><td><b>CSS3<u> - CSS3 Specification</u></b><i>This specification defines Cascading Style Sheets, level 3 (CSS3). CSS3 is a style sheet language that allows authors and users to attach style to structured documents. By separating the presentation style of documents from the content of documents, CSS3 simplifies Web authoring and site maintenance.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=CSS3 u=20110901></button></td></tr>
+<tr><td><b>CVS<u> - Concurrent Versions System (CVS)</u></b><i>The Concurrent Versions System (CVS) is a client-server free software revision control system in the field of software development.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=CVS u=20110901></button></td></tr>
+<tr><td><b>DayTime<u> - Daytime Protocol</u></b><i>The Daytime Protocol is a service in the Internet Protocol Suite, defined in 1983 in RFC 867. </i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=DayTime u=20110901></button></td></tr>
+<tr><td><b>Dojo<u> - Dojo Toolkit</u></b><i>Dojo Toolkit is an open source modular JavaScript library (or more specifically JavaScript toolkit) designed to ease the rapid development of cross-platform, JavaScript/Ajax-based applications and web sites.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Dojo u=20110901></button></td></tr>
+<tr><td><b>DOM<u> - DOM Specifications</u></b><i>The Document Object Model (DOM) is a cross-platform and language-independent convention for representing and interacting with objects in HTML, XHTML and XML documents. Aspects of the DOM (such as its "Elements") may be addressed and manipulated within the syntax of the programming language in use. The public interface of a DOM is specified in its application programming interface (API).</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=DOM u=20110901></button></td></tr>
+<tr><td><b>FileAPI<u> - W3C File API</u></b><i>This specification provides an API for representing file objects in web applications, as well as programmatically selecting them and accessing their data.</i></td><td class=u><nobr>September 05,2011</nobr></td><td><button id=FileAPI u=20110905></button></td></tr>
+<tr><td><b>FLTK<u> - Fast Light Toolkit (FLTK) Documentation</u></b><i>FLTK (pronounced "fulltick") is a cross-platform C++ GUI toolkit for UNIX®/Linux® (X11), Microsoft® Windows®, and MacOS® X.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=FLTK u=20110901></button></td></tr>
+<tr><td><b>FTP<u> - File Transfer Protocol (FTP)</u></b><i>File Transfer Protocol (FTP) is a standard network protocol used to copy a file from one host to another over a TCP-based network, such as the Internet.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=FTP u=20110901></button></td></tr>
+<tr><td><b>Geolocation-API<u> - Geolocation API Specification</u></b><i>This specification defines an API that provides scripted access to geographical location information associated with the hosting device. </i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Geolocation-API u=20110901></button></td></tr>
+<tr><td><b>GIF<u> - Graphics Interchange Format (GIF)</u></b><i>The Graphics Interchange Format (GIF) is a bitmap image format that was introduced by CompuServe in 1987 and has since come into widespread usage on the World Wide Web due to its wide support and portability.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=GIF u=20110901></button></td></tr>
+<tr><td><b>Git<u> - Git User's Manual</u></b><i>Git is a free &amp; open source, distributed version control system designed to handle everything from small to very large projects with speed and efficiency.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Git u=20110901></button></td></tr>
+<tr><td><b>GLSL<u> - OpenGL Shading Language (GLSL)</u></b><i>This document describes a programming language that is a companion to OpenGL 4.0 and higher, called The OpenGL Shading Language.</i></td><td class=u><nobr>September 04,2011</nobr></td><td><button id=GLSL u=20110904></button></td></tr>
+<tr><td><b>GNU Coding Standards<u> - GNU Coding Standards</u></b><i>The GNU Coding Standards were written by Richard Stallman and other GNU Project volunteers.</i></td><td class=u><nobr>September 22,2011</nobr></td><td><button id=GNU-Coding-Standards u=20110922></button></td></tr>
+<tr><td><b>Google+ API<u> - Google+ API</u></b><i>The Google+ API is the programming interface to Google+.</i></td><td class=u><nobr>September 17,2011</nobr></td><td><button id=Google-Plus u=20110917></button></td></tr>
+<tr><td><b>Google-StyleGuide<u> - Google-StyleGuide</u></b><i>C++ Style Guide, JavaScript Style Guide, Objective-C Style Guide, and Python Style Guide.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Google-StyleGuide u=20110901></button></td></tr>
+<tr><td><b>Hadoop<u> - Apache Hadoop Documentation</u></b><i>The Apache™ Hadoop™ project develops open-source software for reliable, scalable, distributed computing.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Hadoop u=20110901></button></td></tr>
+<tr><td><b>Haml<u> - HTML Abstraction Markup Language (Haml)</u></b><i>Haml is a markup language that’s used to cleanly and simply describe the HTML of any web document without the use of inline code.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Haml u=20110901></button></td></tr>
+<tr><td><b>Haskell<u> - Haskell Documentation</u></b><i>Haskell is a standardized, general-purpose purely functional programming language, with non-strict semantics and strong static typing.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Haskell u=20110901></button></td></tr>
+<tr><td><b>Hibernate<u> - Hibernate Documentation</u></b><i>Hibernate is a high-performance Object/Relational persistence and query service.</i></td><td class=u><nobr>September 14,2011</nobr></td><td><button id=Hibernate u=20110914></button></td></tr>
+<tr><td><b>HTML4<u> - HTML4 Specification</u></b><i>This specification defines the HyperText Markup Language (HTML), the publishing language of the World Wide Web. This specification defines HTML 4.01, which is a subversion of HTML 4.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=HTML4 u=20110901></button></td></tr>
+<tr><td><b>HTML5<u> - HTML5 Specification</u></b><i>HTML5 is a language for structuring and presenting content for the World Wide Web, a core technology of the Internet.</i></td><td class=u><nobr>September 09,2011</nobr></td><td><button id=HTML5 u=20110909></button></td></tr>
+<tr><td><b>HTTP<u> - Hypertext Transfer Protocol (HTTP)</u></b><i>The Hypertext Transfer Protocol (HTTP) is an application-level protocol for distributed, collaborative, hypermedia information systems.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=HTTP u=20110901></button></td></tr>
+<tr><td><b>ICMP<u> - Internet Control Message Protocol (ICMP)</u></b><i>The Internet Control Message Protocol (ICMP) is one of the core protocols of the Internet Protocol Suite.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=ICMP u=20110901></button></td></tr>
+<tr><td><b>ICP<u> - Internet Cache Protocol (ICP)</u></b><i>The Internet Cache Protocol (ICP) is a protocol used for coordinating web caches.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=ICP u=20110901></button></td></tr>
+<tr><td><b>IP<u> - Internet Protocol (IP)</u></b><i>The Internet Protocol (IP) is the principal communications protocol used for relaying datagrams (packets) across an internetwork using the Internet Protocol Suite.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=IP u=20110901></button></td></tr>
+<tr><td><b>JavaScript<u> - ECMAScript Language Specification</u></b><i>This Standard defines the JavaScript (ECMAScript) scripting language.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=JavaScript u=20110901></button></td></tr>
+<tr><td><b>jCanvaScript<u> - jCanvaScript Documentation</u></b><i>jCanvaScript is a javasript library that provides you methods to manage with the content of a HTML5 canvas element easily.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=jCanvaScript u=20110901></button></td></tr>
+<tr><td><b>jQuery<u> - jQuery & jQuery UI Documentation</u></b><i>jQuery is a fast and concise JavaScript Library that simplifies HTML document traversing, event handling, animating, and Ajax interactions for rapid web development. jQuery is designed to change the way that you write JavaScript.</i></td><td class=u><nobr>September 14,2011</nobr></td><td><button id=jQuery u=20110914></button></td></tr>
+<tr><td><b>jQuery.mobile<u> - jQuery Mobile Documentation</u></b><i>jQuery Mobile: Touch-Optimized Web Framework for Smartphones &amp; Tablets<br>A unified user interface system across all popular mobile device platforms,built on the rock-solid jQuery and jQuery UI foundation. Its lightweight code is built with progressive enhancement, and has a flexible, easily themeable design.</i></td><td class=u><nobr>September 21,2011</nobr></td><td><button id=jQuery.mobile u=20110921></button></td></tr>
+<tr><td><b>KTX<u> - KTX File Format Specification</u></b><i>KTX is a format for storing textures for OpenGL and OpenGL ES applications.</i></td><td class=u><nobr>September 18,2011</nobr></td><td><button id=KTX u=20110918></button></td></tr>
+<tr><td><b>Lua<u> - The Programming Language Lua</u></b><i>Lua is a powerful, fast, lightweight, embeddable scripting language.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Lua u=20110901></button></td></tr>
+<tr><td><b>MathGL<u> - MathGL - library for scientific graphics</u></b><i>This file documents the Mathematical Graphic Library (MathGL), a collection of classes and routines for scientific plotting. </i></td><td class=u><nobr>September 03,2011</nobr></td><td><button id=MathGL u=20110903></button></td></tr>
+<tr><td><b>MathML<u> - Mathematical Markup Language (MathML)</u></b><i>MathML is an XML application for describing mathematical notation and capturing both its structure and content.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=MathML u=20110901></button></td></tr>
+<tr><td><b>midori<u> - midori Javascript Framework</u></b><i>midori is an ultra-lightweight JavaScript framework that gets the job done without getting in your way.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=midori u=20110901></button></td></tr>
+<tr><td><b>MochiKit<u> - MochiKit Javascript Framework</u></b><i>MochiKit is a highly documented and well tested, suite of JavaScript libraries that will help you get shit done, fast.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=MochiKit u=20110901></button></td></tr>
+<tr><td><b>Modernizr<u> - Modernizr JavaScript Library</u></b><i>Modernizr is an open-source JavaScript library that helps you build the next generation of HTML5 and CSS3-powered websites.</i></td><td class=u><nobr>September 08,2011</nobr></td><td><button id=Modernizr u=20110908></button></td></tr>
+<tr><td><b>MooTools<u> - MooTools API Documentation</u></b><i>MooTools is a <EM>compact</EM>, <EM>modular</EM>, <EM>Object-Oriented</EM> JavaScript framework designed for the intermediate to advanced JavaScript developer. It allows you to write <EM>powerful</EM>, <EM>flexible</EM>, and <EM>cross-browser</EM> code with its elegant, well documented, and <EM>coherent API</EM>.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=MooTools u=20110901></button></td></tr>
+<tr><td><b>NetBIOS<u> - NetBIOS Protocol</u></b><i>NetBIOS is an acronym for Network Basic Input/Output System. </i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=NetBIOS u=20110901></button></td></tr>
+<tr><td><b>Node.js<u> - Node.js Documentation</u></b><i>Node.js is an event-driven I/O framework for the V8 JavaScript engine on Unix-like platforms.</i></td><td class=u><nobr>September 09,2011</nobr></td><td><button id=Node.js u=20110909></button></td></tr>
+<tr><td><b>NTP<u> - Network Time Protocol (NTP)</u></b><i>The Network Time Protocol (NTP) is a protocol for synchronizing the clocks of computer systems over packet-switched, variable-latency data networks.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=NTP u=20110901></button></td></tr>
+<tr><td><b>OCaml<u> - OCaml system</u></b><i>OCaml is the most popular variant of the Caml language.</i></td><td class=u><nobr>September 08,2011</nobr></td><td><button id=OCaml u=20110908></button></td></tr>
+<tr><td><b>OCILIB<u> - OCILIB Documentation</u></b><i>OCILIB is an open source and cross platform Oracle Driver that delivers efficient access to Oracle databases.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=OCILIB u=20110901></button></td></tr>
+<tr><td><b>OpenAL<u> - Open Audio Library (OpenAL)</u></b><i>OpenAL (Open Audio Library) is a free software cross-platform audio API. </i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=OpenAL u=20110901></button></td></tr>
+<tr><td><b>OpenCL<u> - Open Computing Language (OpenCL)</u></b><i>OpenCL (Open Computing Language) is an open royalty-free standard for general purpose parallel programming across CPUs, GPUs and other processors, giving software developers portable and efficient access to the power of these heterogeneous processing platforms.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=OpenCL u=20110901></button></td></tr>
+<tr><td><b>OpenGL<u> - Open Graphics Library (OpenGL)</u></b><i>OpenGL (Open Graphics Library)[3] is a standard specification defining a cross-language, cross-platform API for writing applications that produce 2D and 3D computer graphics.</i></td><td class=u><nobr>September 03,2011</nobr></td><td><button id=OpenGL u=20110903></button></td></tr>
+<tr><td><b>OpenGL ES<u> - OpenGL for Embedded Systems (OpenGL ES)</u></b><i>OpenGL for Embedded Systems (OpenGL ES) is a subset of the OpenGL 3D graphics application programming interface (API) designed for embedded devices such as mobile phones, PDAs, and video game consoles. OpenGL ES is managed by the not-for-profit technology consortium, the Khronos Group, Inc.</i></td><td class=u><nobr>September 18,2011</nobr></td><td><button id=OpenGL.ES u=20110918></button></td></tr>
+<tr><td><b>Perl<u> - Perl programming language</u></b><i>Perl is a general-purpose programming language originally developed for text manipulation and now used for a wide range of tasks including system administration, web development, network programming, GUI development, and more.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Perl u=20110901></button></td></tr>
+<tr><td><b>PGML<u> - Precision Graphics Markup Language (PGML)</u></b><i>Precision Graphics Markup Language (PGML) is an XML-based language for representing vector graphics.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=PGML u=20110901></button></td></tr>
+<tr><td><b>PNG<u> - Portable Network Graphics (PNG) Specification</u></b><i>This specification describes PNG (Portable Network Graphics), an extensible file format for the lossless, portable, well-compressed storage of raster images. PNG provides a patent-free replacement for GIF and can also replace many common uses of TIFF. Indexed-color, grayscale, and truecolor images are supported, plus an optional alpha channel. Sample depths range from 1 to 16 bits.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=PNG u=20110901></button></td></tr>
+<tr><td><b>POP3<u> - Post Office Protocol - Version 3 (POP3)</u></b><i>The Post Office Protocol (POP) is an application-layer Internet standard protocol used by local e-mail clients to retrieve e-mail from a remote server over a TCP/IP connection.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=POP3 u=20110901></button></td></tr>
+<tr><td><b>PPP<u> - Point-to-Point Protocol (PPP)</u></b><i>The Point-to-Point Protocol (PPP) provides a standard method for transporting multi-protocol datagrams over point-to-point links.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=PPP u=20110901></button></td></tr>
+<tr><td><b>Prototype<u> - Prototype JavaScript Framework</u></b><i>Prototype is a JavaScript framework that aims to ease development of dynamic web applications. It offers a familiar class-style OO framework, extensive Ajax support, higher-order programming constructs, and easy DOM manipulation.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Prototype u=20110901></button></td></tr>
+<tr><td><b>qooxdoo<u> - qooxdoo JavaScript Framework</u></b><i>qooxdoo is a comprehensive and innovative framework for creating desktop-style web applications, often called rich internet applications (RIAs).</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=qooxdoo u=20110901></button></td></tr>
+<tr><td><b>Raphael<u> - Raphael JavaScript Library Documentation</u></b><i>Raphaël is a small JavaScript library that should simplify your work with vector graphics on the web.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Raphael u=20110901></button></td></tr>
+<tr><td><b>Rico<u> - Rico Documentation</u></b><i>Rico is an open source JavaScript library for developing rich Internet applications (RIAs) that use Ajax.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Rico u=20110901></button></td></tr>
+<tr><td><b>RSS<u> - RSS Specification</u></b><i>RSS (originally RDF Site Summary, often dubbed Really Simple Syndication) is a family of web feed formats used to publish frequently updated works—such as blog entries, news headlines, audio, and video—in a standardized format.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=RSS u=20110901></button></td></tr>
+<tr><td><b>Ruby<u> - Ruby Documentation</u></b><i>Ruby is A dynamic, open source programming language with a focus on simplicity and productivity. It has an elegant syntax that is natural to read and easy to write.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Ruby u=20110901></button></td></tr>
+<tr><td><b>Ruby on Rails<u> - Ruby on Rails Documentation</u></b><i>Ruby on Rails, often shortened to Rails or RoR, is an open source web application framework for the Ruby programming language.</i></td><td class=u><nobr>September 16,2011</nobr></td><td><button id=RoR u=20110916></button></td></tr>
+<tr><td><b>Sass<u> - Syntactically Awesome Stylesheets (Sass)</u></b><i>Sass makes CSS fun again. Sass is an extension of CSS3, adding nested rules, variables, mixins, selector inheritance, and more.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Sass u=20110901></button></td></tr>
+<tr><td><b>Scheme<u> - Scheme Programming Language</u></b><i>Scheme is a statically scoped and properly tail-recursive dialect of the Lisp programming language invented by Guy Lewis Steele Jr. and Gerald Jay Sussman.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Scheme u=20110901></button></td></tr>
+<tr><td><b>SMTP<u> - Simple Mail Transfer Protocol (SMTP)</u></b><i>Simple Mail Transfer Protocol (SMTP) is an Internet standard for electronic mail (e-mail) transmission across Internet Protocol (IP) networks.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=SMTP u=20110901></button></td></tr>
+<tr><td><b>Spry<u> - Adobe Spry framework for AJAX</u></b><i>Adobe Spry framework for AJAX is a JavaScript-based framework that enables the rapid development of Ajax-powered web pages. </i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Spry u=20110901></button></td></tr>
+<tr><td><b>SQLite<u> - SQLite Documentation</u></b><i>SQLite is a software library that implements a self-contained, serverless, zero-configuration, transactional SQL database engine. SQLite is the most widely deployed SQL database engine in the world. The source code for SQLite is in the public domain.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=SQLite u=20110901></button></td></tr>
+<tr><td><b>Squid<u> - Squid Documentation</u></b><i>Squid is a fully-featured HTTP/1.0 proxy which is almost (but not quite - we're getting there!) HTTP/1.1 compliant.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Squid u=20110901></button></td></tr>
+<tr><td><b>STL<u> - Standard Template Library</u></b><i>The Standard Template Library (STL) is a software library partially included in the C++ Standard Library.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=STL u=20110901></button></td></tr>
+<tr><td><b>Subversion<u> - Version Control with Subversion</u></b><i>Subversion is a free/open source version control system (VCS).</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Subversion u=20110901></button></td></tr>
+<tr><td><b>SVG<u> - SVG Specification</u></b><i>This specification defines the features and syntax for Scalable Vector Graphics (SVG) Version 1.1, a modularized language for describing two-dimensional vector and mixed vector/raster graphics in XML.</i></td><td class=u><nobr>September 22,2011</nobr></td><td><button id=SVG u=20110922></button></td></tr>
+<tr><td><b>Tcl/Tk<u> - Tool Command Language (Tcl)</u></b><i>Tcl (Tool Command Language) is a very powerful but easy to learn dynamic programming language, suitable for a very wide range of uses, including web and desktop applications, networking, administration, testing and many more.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Tcl u=20110901></button></td></tr>
+<tr><td><b>TCP<u> - Transmission Control Protocol (TCP)</u></b><i>The Transmission Control Protocol (TCP) is intended for use as a highly reliable host-to-host protocol between hosts in packet-switched computer communication networks, and in interconnected systems of such networks.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=TCP u=20110901></button></td></tr>
+<tr><td><b>Telnet<u> - Telnet Protocol</u></b><i>Telnet is a network protocol used on the Internet or local area networks to provide a bidirectional interactive text-oriented communications facility using a virtual terminal connection.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Telnet u=20110901></button></td></tr>
+<tr><td><b>Time<u> - Time Protocol</u></b><i>The Time Protocol is a network protocol in the Internet Protocol Suite defined in 1983 in RFC 868. </i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Time u=20110901></button></td></tr>
+<tr><td><b>UDP<u> - User Datagram Protocol (UDP)</u></b><i>The User Datagram Protocol (UDP) is one of the core members of the Internet Protocol Suite, the set of network protocols used for the Internet. </i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=UDP u=20110901></button></td></tr>
+<tr><td><b>UIZE<u> - UIZE JavaScript Framework</u></b><i>UIZE (pronounced "you eyes") is a powerful, open source, object oriented JavaScript framework - supporting widgets, AJAX, DOM, templates, and more.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=UIZE u=20110901></button></td></tr>
+<tr><td><b>UTF-8<u> - UCS Transformation Format - 8-bit (UTF-8)</u></b><i>UTF-8 (UCS Transformation Format — 8-bit) is a multibyte character encoding for Unicode.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=UTF-8 u=20110901></button></td></tr>
+<tr><td><b>VML<u> - Vector Markup Language (VML)</u></b><i>Vector Markup Language (VML) is a deprecated XML language used to produce vector graphics.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=VML u=20110901></button></td></tr>
+<tr><td><b>VRML<u> - Virtual Reality Modeling Language (VRML)</u></b><i>VRML (Virtual Reality Modeling Language, pronounced vermal or by its initials, originally—before 1995—known as the Virtual Reality Markup Language) is a standard file format for representing 3-dimensional (3D) interactive vector graphics, designed particularly with the World Wide Web in mind.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=VRML u=20110901></button></td></tr>
+<tr><td><b>W3C Selectors API<u> - W3C Selectors API</u></b><i>This specification introduces two methods that take a group of selectors (often simply referred to as a selector) as an argument and return the matching elements.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=Selectors-Api u=20110901></button></td></tr>
+<tr><td><b>Web Audio API<u> - Web Audio API Specification</u></b><i>This specification describes a high-level JavaScript API for processing and synthesizing audio in web applications.</i></td><td class=u><nobr>September 21,2011</nobr></td><td><button id=WebAudioAPI u=20110921></button></td></tr>
+<tr><td><b>WebCGM<u> - WebCGM<SUP>TM</SUP> 2.1 specification</u></b><i>WebCGM is a set of specifications targeted especially at the effective application of the ISO CGM:1999 standard to representation of 2D graphical content within Web documents.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=WebCGM u=20110901></button></td></tr>
+<tr><td><b>WebCL<u> - WebCL Documentation</u></b><i>WebCL provides JavaScript bindings to OpenCL API.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=WebCL u=20110901></button></td></tr>
+<tr><td><b>WebGL<u> - WebGL Specification</u></b><i>This specification describes an additional rendering context and support objects for the HTML 5 canvas element. This context allows rendering using an API that conforms closely to the OpenGL ES 2.0 API.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=WebGL u=20110901></button></td></tr>
+<tr><td><b>WebIDL<u> - Web IDL Specification</u></b><i>This specification defines an interface definition language, Web IDL, that can be used to describe interfaces that are intended to be implemented in web browsers.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=WebIDL u=20110901></button></td></tr>
+<tr><td><b>WebSocket<u> - The Web Sockets API</u></b><i>This specification defines an API that enables Web pages to use the Web Sockets protocol for two-way communication with a remote host. </i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=WebSocket u=20110901></button></td></tr>
+<tr><td><b>WT<u> - Wt, C++ Web Toolkit Documentation</u></b><i>Wt (pronounced as witty) is a C++ library for developing web applications.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=WT u=20110901></button></td></tr>
+<tr><td><b>X3D<u> - X3D International Specification Standards</u></b><i>X3D is a scalable and open software standard for defining and communicating real-time, interactive 3D content for visual effects and behavioral modeling. It can be used across hardware devices and in a broad range of applications including CAD, visual simulation, medical visualization, GIS, entertainment, educational, and multimedia presentations.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=X3D u=20110901></button></td></tr>
+<tr><td><b>XHTML<u> - XHTML Specification</u></b><i>XHTML 2 is a general purpose markup language designed to represent documents for a wide range of purposes across the World Wide Web.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=XHTML u=20110901></button></td></tr>
+<tr><td><b>XML<u> - Extensible Markup Language (XML)</u></b><i>Extensible Markup Language (XML) is a set of rules for encoding documents in machine-readable form.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=XML u=20110901></button></td></tr>
+<tr><td><b>XPath<u> - XML Path Language (XPath)</u></b><i>XPath is a language for addressing parts of an XML document, designed to be used by both XSLT and XPointer.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=XPath u=20110901></button></td></tr>
+<tr><td><b>XPointer<u> - XPointer Specification</u></b><i>XPointer is a system for addressing components of XML based internet media.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=XPointer u=20110901></button></td></tr>
+<tr><td><b>XQuery<u> - XQuery Specification</u></b><i>XQuery is a query and functional programming language that is designed to query collections of XML data.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=XQuery u=20110901></button></td></tr>
+<tr><td><b>XSLT<u> - XSL Transformations (XSLT)</u></b><i>This specification defines the syntax and semantics of XSLT, which is a language for transforming XML documents into other XML documents.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=XSLT u=20110901></button></td></tr>
+<tr><td><b>YAML<u> - YAML Ain't Markup Language (YAML)</u></b><i>YAML is a human friendly data serialization standard for all programming languages.</i></td><td class=u><nobr>September 03,2011</nobr></td><td><button id=YAML u=20110903></button></td></tr>
+<tr><td><b>YUI<u> - The Yahoo! User Interface Library (YUI)</u></b><i>The Yahoo! User Interface Library (YUI) is an open-source JavaScript library for building richly interactive web applications using techniques such as Ajax, DHTML and DOM scripting.</i></td><td class=u><nobr>September 01,2011</nobr></td><td><button id=YUI u=20110901></button></td></tr>
+</table>
+</body>
+</html>
